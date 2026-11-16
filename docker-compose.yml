@@ -15,11 +15,11 @@ services:
 
   mysql:
     image: mysql:8.0
-    container_name: myapp_mysql
+    container_name: stockpulse_mysql
     restart: always
     environment:
       MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: myapp
+      MYSQL_DATABASE: stockpulse
     ports:
       - "3306:3306"
     volumes:
