@@ -41,10 +41,10 @@ Rules:
 
 | Table | Key columns |
 |---|---|
-| `users` | name, email, password, `role` (admin / manager / staff) |
+| `users` | name, email, password, `role` (admin / manager / staff), `is_demo` |
 | `categories` | name, slug, `parent_id` (nullable, allows nested categories) |
 | `suppliers` | name, contact_name, email, phone, `lead_time_days` |
-| `warehouses` | `code` (unique, e.g. `MNL-01`), name, address, is_active |
+| `warehouses` | `code` (unique, e.g. `MNL-01`), name, city, address, is_active |
 | `products` | `sku` (unique), name, description, `category_id`, `default_supplier_id`, `cost_price`, `sell_price`, image_path, is_active, soft deletes |
 
 ### Inventory core
@@ -53,14 +53,14 @@ Rules:
 |---|---|
 | `stock_levels` | `product_id`, `warehouse_id`, `quantity`, `reorder_point`, `reorder_qty`. Each product+warehouse pair is unique; quantity can't go below 0. |
 | `stock_movements` | `product_id`, `warehouse_id`, `quantity_change` (+ or −), `quantity_after`, `type` (receipt / sale / adjustment / transfer_in / transfer_out / return), `reference_type` + `reference_id` (polymorphic link to the PO, order or transfer that caused it), `unit_cost`, `user_id`, note, created_at. **Append-only.** |
-| `stock_transfers` + `stock_transfer_items` | from_warehouse, to_warehouse, status, user; per item: product and qty |
+| `stock_transfers` + `stock_transfer_items` | `transfer_number`, from_warehouse, to_warehouse, status, user; per item: product and quantity |
 
 ### Purchasing and sales
 
 | Table | Key columns |
 |---|---|
 | `purchase_orders` | `po_number`, supplier, destination warehouse, `status` (draft → ordered → partially_received → received / cancelled), expected_at, received_at |
-| `purchase_order_items` | product, `qty_ordered`, `qty_received`, unit_cost |
+| `purchase_order_items` | product, `quantity_ordered`, `quantity_received`, unit_cost |
 | `customers` | name, email, city, country (simulated) |
 | `orders` | `order_number`, customer, fulfilling warehouse, `channel` (web / marketplace / pos), `status` (pending → paid → fulfilled / cancelled / refunded), totals, placed_at |
 | `order_items` | product, quantity, `unit_price`, `unit_cost` (copied at sale time so profit stays accurate if prices change later) |
@@ -76,7 +76,7 @@ Rules:
 ## Architecture rules
 
 1. **All stock changes go through one `InventoryService`.** Nothing else writes to `stock_levels` directly. Each change writes the ledger row and updates the level in a single DB transaction.
-2. **Prevent overselling with row locks.** Fulfillment locks the stock row (`SELECT … FOR UPDATE`) before deducting. The simulator places orders concurrently, so this is exercised for real.
+2. **Prevent overselling with row locks.** Stock is deducted when an order is **placed** (not when it ships): placing an order locks the stock row (`SELECT … FOR UPDATE`), checks quantity and deducts in one transaction. Cancelling or refunding writes a `return` movement that puts the stock back. The simulator places orders concurrently, so this is exercised for real.
 3. **The simulator uses the real code path.** A queued job creates orders through the same `OrderService` a human would use. It picks products weighted by popularity, chooses a warehouse with stock, and backorders or cancels when nothing is available. Admins can start, stop and set its speed from the UI.
 4. **Real-time events through Laravel Reverb:**
    - `StockLevelChanged` and `LowStockDetected` on a `warehouse.{id}` channel
@@ -102,12 +102,12 @@ Rules:
 
 ## Milestones
 
-### M1 — Foundation
-- [ ] Rename the project to StockPulse; write the ER diagram
-- [ ] Migrations and models with relationships
-- [ ] Seeders: ~3 warehouses, ~10 categories, ~150 products, ~20 suppliers, 90 days of past orders
-- [ ] Sanctum SPA auth, roles and policies
-- [ ] App shell: sidebar layout, routing, auth pages
+### M1 — Foundation ✅ (walkthrough: [docs/M1-WALKTHROUGH.md](M1-WALKTHROUGH.md))
+- [x] Rename the project to StockPulse; write the ER diagram ([docs/DATABASE.md](DATABASE.md))
+- [x] Migrations and models with relationships
+- [x] Seeders: 3 warehouses, 10 categories, 150 products, 20 suppliers, 90 days of past orders
+- [x] Sanctum SPA auth and roles (`role:` middleware). Per-model policies come with each CRUD screen from M2.
+- [x] App shell: sidebar layout, routing, auth pages
 
 ### M2 — Catalog and inventory
 - [ ] Product, category, supplier and warehouse CRUD with search, filter and pagination

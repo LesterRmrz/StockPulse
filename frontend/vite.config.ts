@@ -21,6 +21,11 @@ export default defineConfig({
         target: 'http://php:8000',
         changeOrigin: true,
       },
+      // Sanctum's CSRF cookie endpoint, called once before logging in.
+      '/sanctum': {
+        target: 'http://php:8000',
+        changeOrigin: true,
+      },
     },
   },
 })

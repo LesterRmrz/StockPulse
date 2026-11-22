@@ -1,6 +1,8 @@
-# my-project
+# StockPulse
 
-> _One-line description of what the app does — fill this in once the idea takes shape._
+> A full-stack enterprise e-commerce dashboard and inventory manager built with React, TypeScript, Tailwind CSS, and Laravel. Features real-time stock analytics, relational database architecture, and containerized deployment with Docker.
+
+See [docs/PLAN.md](docs/PLAN.md) for the roadmap and [docs/DATABASE.md](docs/DATABASE.md) for the schema.
 
 <!-- Add a screenshot here once there's something to show:
 ![Screenshot](docs/screenshot.png)
@@ -18,6 +20,8 @@
 ## Getting started
 
 **Requirements:** [Docker Desktop](https://www.docker.com/products/docker-desktop/) and Git. No local PHP, Composer, Node or MySQL needed.
+(Optional: install Node and run `npm ci` in `frontend/` so your editor can find the TypeScript types. The app
+itself uses the copy inside the container.)
 
 ```bash
 # 1. Clone the repository
@@ -35,11 +39,12 @@ docker compose run --rm php php artisan key:generate
 # 4. Start everything
 docker compose up -d
 
-# 5. Create the database tables
-docker compose exec php php artisan migrate
+# 5. Create the database tables and load the demo data (about a minute)
+docker compose exec php php artisan migrate:fresh --seed
 ```
 
-Then open:
+Then open http://localhost:5173 and sign in with `admin@stockpulse.test` / `password`, or click a demo button.
+The seeded accounts are listed in [docs/M1-WALKTHROUGH.md](docs/M1-WALKTHROUGH.md#1-running-it).
 
 | URL                        | What it is                          |
 |----------------------------|-------------------------------------|
@@ -57,8 +62,16 @@ docker compose down             # stop and remove containers (database is kept)
 docker compose logs -f php      # follow backend logs
 
 docker compose exec php php artisan <command>      # run Laravel commands
+docker compose exec php php artisan migrate:fresh --seed  # rebuild the database with fresh demo data
+docker compose exec php php artisan test           # backend tests (uses the stockpulse_testing database)
+docker compose exec frontend npm run lint          # frontend lint
+docker compose exec frontend npm run build         # frontend type-check + production build
 docker compose exec frontend npm install <package> # add a frontend package
 ```
+
+> The test database `stockpulse_testing` is created automatically on a fresh MySQL volume. If your volume
+> already existed before M1, create it once:
+> `docker compose exec mysql mysql -uroot -proot -e "CREATE DATABASE IF NOT EXISTS stockpulse_testing"`
 
 > `docker compose down -v` also deletes the database volume — use it only for a fresh start.
 
@@ -69,5 +82,7 @@ my-project/
 ├── backend/             # Laravel API
 ├── frontend/            # React + TypeScript (Vite)
 ├── docker/php/          # Dockerfile for the PHP container
+├── docker/mysql/        # Creates the test database on first start
+├── docs/                # Plan, database reference, milestone walkthroughs
 └── docker-compose.yml   # Defines the php, mysql and frontend services
 ```
