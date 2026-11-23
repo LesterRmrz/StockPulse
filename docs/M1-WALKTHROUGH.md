@@ -13,7 +13,7 @@ cookie-based login with roles, and the React app shell (sign-in page + sidebar l
 ```bash
 docker compose up -d
 docker compose exec php php artisan migrate:fresh --seed   # rebuild DB + demo data (~1 min)
-docker compose exec php php artisan test                   # 33 backend tests
+docker compose exec php php artisan test                   # 37 backend tests
 ```
 
 Open http://localhost:5173 and sign in:
@@ -246,7 +246,7 @@ the same engine as production. `RefreshDatabase` migrates it once and wraps each
 
 | Test | Proves |
 |---|---|
-| `AuthTest` (9) | Login, wrong password, validation, 401 for guests, logout, demo login rules, rate limiting |
+| `AuthTest` (13) | Login, wrong password, validation, 401 for guests, logout, "keep me signed in" (cookie set, signs you back in, invalidated on logout), demo login rules, rate limiting |
 | `RoleMiddlewareTest` (3) | `role:` lets the right roles through, 403 otherwise |
 | `StockMovementTest` (3) | The ledger can't be edited or deleted |
 | `SchemaTest` (8) | Relationships and database rules: nested categories, delete behaviour, one stock row per product/warehouse, quantity can't go negative, unique SKUs, soft deletes, the `order` morph alias |
