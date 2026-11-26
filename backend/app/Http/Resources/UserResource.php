@@ -2,7 +2,11 @@
 
 namespace App\Http\Resources;
 
+use App\Models\Product;
+use App\Models\StockLevel;
+use App\Models\StockTransfer;
 use App\Models\User;
+use App\Models\Warehouse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -23,6 +27,15 @@ class UserResource extends JsonResource
             'role' => $this->role->value,
             'role_label' => $this->role->label(),
             'is_demo' => $this->is_demo,
+            // What this user may do, answered by the policies. The frontend uses
+            // these to hide buttons; the API still checks every request itself.
+            'can' => [
+                'manage_catalog' => $this->resource->can('create', Product::class),
+                'manage_warehouses' => $this->resource->can('create', Warehouse::class),
+                'adjust_stock' => $this->resource->can('adjust', StockLevel::class),
+                'transfer_stock' => $this->resource->can('create', StockTransfer::class),
+                'edit_reorder_settings' => $this->resource->can('update', StockLevel::class),
+            ],
         ];
     }
 }

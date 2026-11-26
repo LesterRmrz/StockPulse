@@ -1,10 +1,14 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom'
+import { Spinner } from '../components/Busy'
 import { useAuth } from './auth-context'
 
 function FullScreenLoader() {
   return (
     <div className="grid min-h-dvh place-items-center" role="status" aria-live="polite">
-      <span className="text-sm text-muted">Loading StockPulse…</span>
+      <span className="flex items-center gap-3 text-sm text-muted">
+        <Spinner />
+        Loading StockPulse…
+      </span>
     </div>
   )
 }
@@ -17,7 +21,8 @@ export function RequireAuth() {
   if (status === 'loading') return <FullScreenLoader />
   if (status === 'guest') {
     // Remember where they were going, so login can send them back there.
-    return <Navigate to="/login" replace state={{ from: location.pathname }} />
+    // pathname + search keeps the filters too: /inventory?status=attention, not just /inventory
+    return <Navigate to="/login" replace state={{ from: location.pathname + location.search }} />
   }
   return <Outlet />
 }

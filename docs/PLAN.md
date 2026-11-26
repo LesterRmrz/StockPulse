@@ -84,6 +84,13 @@ Rules:
 
    The frontend listens with Laravel Echo and updates KPIs, tables and alert toasts live.
 5. **Demo mode.** "Log in as Manager / Staff" demo buttons, destructive actions blocked for demo users, and a nightly database reset.
+6. **Backend layers: Controller → Service → Eloquent, no repositories.** Eloquent already is the data-access layer, and we deliberately depend on MySQL (row locks), so a repository would only wrap it. Instead:
+   - **Form Requests** validate input; **Policies** decide who may do what; **API Resources** shape the JSON.
+   - **Services** (`InventoryService`, later `OrderService`) hold rules that change data, inside transactions.
+   - **Query scopes** on models hold reusable filters (`StockLevel::needsAttention()`).
+   - **Query classes** in `app/Queries` hold multi-table reports (`WarehouseStockSummary`).
+   - Controllers stay thin: authorize, validate, call one of the above, return a resource.
+7. **Permissions come from policies, and the frontend reads them.** `GET /api/user` includes a `can` object computed from the policies. The UI uses it only to hide buttons; the API checks every request itself.
 
 ## VPS deployment
 
@@ -106,15 +113,16 @@ Rules:
 - [x] Rename the project to StockPulse; write the ER diagram ([docs/DATABASE.md](DATABASE.md))
 - [x] Migrations and models with relationships
 - [x] Seeders: 3 warehouses, 10 categories, 150 products, 20 suppliers, 90 days of past orders
-- [x] Sanctum SPA auth and roles (`role:` middleware). Per-model policies come with each CRUD screen from M2.
+- [x] Sanctum SPA auth and roles (`role:` middleware). Per-model policies came with the CRUD screens in M2.
 - [x] App shell: sidebar layout, routing, auth pages
 
-### M2 — Catalog and inventory
-- [ ] Product, category, supplier and warehouse CRUD with search, filter and pagination
-- [ ] `InventoryService` and the stock ledger
-- [ ] Stock adjustment and transfer screens
-- [ ] Product detail page: stock per warehouse and movement history
-- [ ] Feature tests for stock correctness
+### M2 — Catalog and inventory ✅ (walkthrough: [docs/M2-WALKTHROUGH.md](M2-WALKTHROUGH.md))
+- [x] Product, category, supplier and warehouse CRUD with search, filter and pagination
+- [x] `InventoryService` and the stock ledger (row locks, all-or-nothing transfers)
+- [x] Stock adjustment and transfer screens
+- [x] Product detail page: stock per warehouse and movement history
+- [x] Policies per model: admin / manager / staff permissions
+- [x] Feature tests for stock correctness (37 new, 74 in total)
 
 ### M3 — Purchasing and sales
 - [ ] Purchase order lifecycle, including partial receiving
