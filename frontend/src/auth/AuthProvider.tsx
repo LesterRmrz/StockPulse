@@ -1,3 +1,4 @@
+import { useQueryClient } from '@tanstack/react-query'
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { api, fetchCsrfCookie } from '../lib/api'
 import type { Resource, User } from '../lib/types'
@@ -13,6 +14,7 @@ import { AuthContext, type AuthContextValue, type AuthStatus } from './auth-cont
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [status, setStatus] = useState<AuthStatus>('loading')
+  const queryClient = useQueryClient()
 
   const signedIn = useCallback((u: User) => {
     setUser(u)
@@ -22,7 +24,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signedOut = useCallback(() => {
     setUser(null)
     setStatus('guest')
-  }, [])
+    // Forget every cached API response, so the next person to sign in on this
+    // browser never sees the previous user's data, even for a moment.
+    queryClient.clear()
+  }, [queryClient])
 
   // On first load: are we already logged in?
   useEffect(() => {

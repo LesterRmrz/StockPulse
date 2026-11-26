@@ -4,10 +4,22 @@ services:
     build: ./docker/php
     volumes:
       - .:/var/www/html
+      # Composer packages live in a Docker volume, not the shared Windows folder.
+      # Laravel reads thousands of vendor files per request, and reading them
+      # across the Windows <-> Linux boundary is what made the API slow.
+      # Your own code stays in the shared folder, so edits still apply instantly.
+      # Fill it with: docker compose run --rm php composer install
+      - backend_vendor:/var/www/html/backend/vendor
+      # Turns on OPcache for the dev server (see the file for why)
+      - ./docker/php/dev.ini:/usr/local/etc/php/conf.d/zz-dev.ini:ro
     working_dir: /var/www/html/backend
     depends_on:
       - mysql
     tty: true
+    environment:
+      # PHP's built-in server handles one request at a time by default. With 4
+      # workers, a page that loads 3 lists at once doesn't wait for each in turn.
+      PHP_CLI_SERVER_WORKERS: 4
     # 0.0.0.0 = listen on all interfaces so your PC (and the frontend container) can reach it
     command: php artisan serve --host=0.0.0.0 --port=8000
     ports:
@@ -44,3 +56,4 @@ services:
 
 volumes:
   mysql_data:
+  backend_vendor:

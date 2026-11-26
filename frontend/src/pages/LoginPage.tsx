@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { Check } from 'lucide-react'
 import { useAuth } from '../auth/auth-context'
+import { Spinner } from '../components/Busy'
 import { Logo } from '../components/Logo'
 import { errorMessage } from '../lib/api'
 
@@ -19,24 +20,26 @@ export function LoginPage() {
   const [password, setPassword] = useState('')
   const [remember, setRemember] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [busy, setBusy] = useState(false)
+  // Which button started the sign-in, so only that one shows "Signing in…"
+  const [pending, setPending] = useState<'password' | 'manager' | 'staff' | null>(null)
+  const busy = pending !== null
 
   // After a successful login, <GuestOnly> notices the user is authenticated
   // and redirects into the app, so these handlers don't navigate themselves.
-  async function run(action: () => Promise<void>) {
-    setBusy(true)
+  async function run(source: NonNullable<typeof pending>, action: () => Promise<void>) {
+    setPending(source)
     setError(null)
     try {
       await action()
     } catch (e) {
       setError(errorMessage(e))
-      setBusy(false)
+      setPending(null)
     }
   }
 
   function onSubmit(e: FormEvent) {
     e.preventDefault()
-    void run(() => login(email, password, remember))
+    void run('password', () => login(email, password, remember))
   }
 
   return (
@@ -123,9 +126,11 @@ export function LoginPage() {
             <button
               type="submit"
               disabled={busy}
-              className="h-12 rounded-lg bg-accent font-semibold text-accent-ink transition-opacity hover:opacity-90 disabled:opacity-60"
+              className="flex h-12 items-center justify-center gap-2 rounded-lg bg-accent font-semibold text-accent-ink transition-opacity hover:opacity-90 disabled:opacity-60"
             >
-              {busy ? 'Signing in…' : 'Sign in'}
+              {/* The ring is dark here: the default yellow ring wouldn't show on a yellow button */}
+              {pending === 'password' && <Spinner className="size-4 border-accent-ink/30 border-t-accent-ink" />}
+              {pending === 'password' ? 'Signing in…' : 'Sign in'}
             </button>
           </form>
 
@@ -136,8 +141,8 @@ export function LoginPage() {
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <DemoButton title="Manager" subtitle="Full access" disabled={busy} onClick={() => void run(() => demoLogin('manager'))} />
-            <DemoButton title="Staff" subtitle="Stock and orders" disabled={busy} onClick={() => void run(() => demoLogin('staff'))} />
+            <DemoButton title="Manager" subtitle="Full access" disabled={busy} loading={pending === 'manager'} onClick={() => void run('manager', () => demoLogin('manager'))} />
+            <DemoButton title="Staff" subtitle="Stock and orders" disabled={busy} loading={pending === 'staff'} onClick={() => void run('staff', () => demoLogin('staff'))} />
           </div>
           <p className="text-center text-xs text-muted">Demo data resets every night.</p>
         </div>
@@ -146,16 +151,22 @@ export function LoginPage() {
   )
 }
 
-function DemoButton(props: { title: string; subtitle: string; disabled: boolean; onClick: () => void }) {
+function DemoButton(props: { title: string; subtitle: string; disabled: boolean; loading: boolean; onClick: () => void }) {
   return (
     <button
       type="button"
       onClick={props.onClick}
       disabled={props.disabled}
-      className="flex min-h-16 flex-col items-start justify-center gap-0.5 rounded-lg border border-line-strong bg-canvas px-3.5 text-left hover:border-accent disabled:opacity-60"
+      // The clicked button keeps full opacity and a yellow border; the other one fades
+      className={`flex min-h-16 flex-col items-start justify-center gap-0.5 rounded-lg border bg-canvas px-3.5 text-left hover:border-accent ${
+        props.loading ? 'border-accent' : 'border-line-strong disabled:opacity-60'
+      }`}
     >
       <span className="text-sm font-semibold">{props.title}</span>
-      <span className="text-xs text-muted">{props.subtitle}</span>
+      <span className="flex items-center gap-1.5 text-xs text-muted">
+        {props.loading && <Spinner className="size-3" />}
+        {props.loading ? 'Signing in…' : props.subtitle}
+      </span>
     </button>
   )
 }

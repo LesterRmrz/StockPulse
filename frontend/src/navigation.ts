@@ -6,6 +6,7 @@ import {
   LayoutDashboard,
   Package,
   ShoppingCart,
+  Tags,
   Truck,
   Warehouse,
   type LucideIcon,
@@ -23,6 +24,7 @@ export interface NavItem {
 export const NAV_ITEMS: NavItem[] = [
   { label: 'Dashboard', path: '/', icon: LayoutDashboard, milestone: 'M5' },
   { label: 'Products', path: '/products', icon: Package, milestone: 'M2' },
+  { label: 'Categories', path: '/categories', icon: Tags, milestone: 'M2' },
   { label: 'Inventory', path: '/inventory', icon: Boxes, milestone: 'M2' },
   { label: 'Warehouses', path: '/warehouses', icon: Warehouse, milestone: 'M2' },
   { label: 'Purchase orders', path: '/purchase-orders', icon: ClipboardList, milestone: 'M3' },

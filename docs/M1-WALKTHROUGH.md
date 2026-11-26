@@ -13,7 +13,7 @@ cookie-based login with roles, and the React app shell (sign-in page + sidebar l
 ```bash
 docker compose up -d
 docker compose exec php php artisan migrate:fresh --seed   # rebuild DB + demo data (~1 min)
-docker compose exec php php artisan test                   # 37 backend tests
+docker compose exec php php artisan test                   # backend tests (37 at the end of M1)
 ```
 
 Open http://localhost:5173 and sign in:

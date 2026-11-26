@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
 import { LogOut, Menu, X } from 'lucide-react'
 import { useAuth } from '../auth/auth-context'
+import { Spinner } from '../components/Busy'
 import { Logo } from '../components/Logo'
 import { NAV_ITEMS } from '../navigation'
 
@@ -82,7 +83,15 @@ export function AppLayout() {
 
 function UserCard() {
   const { user, logout } = useAuth()
+  // Hooks must run on every render, so this goes before the early return below
+  const [signingOut, setSigningOut] = useState(false)
   if (!user) return null
+
+  function signOut() {
+    setSigningOut(true)
+    // No need to set it back: when logout finishes, this whole layout is replaced by the login page
+    void logout()
+  }
 
   return (
     <div className="mt-auto flex flex-col gap-3 rounded-xl border border-line bg-surface p-3.5">
@@ -100,11 +109,12 @@ function UserCard() {
       </div>
       <button
         type="button"
-        onClick={() => void logout()}
-        className="flex h-11 items-center justify-center gap-2 rounded-lg border border-line-strong text-sm font-medium hover:bg-surface-2"
+        onClick={signOut}
+        disabled={signingOut}
+        className="flex h-11 items-center justify-center gap-2 rounded-lg border border-line-strong text-sm font-medium hover:bg-surface-2 disabled:opacity-70"
       >
-        <LogOut size={16} aria-hidden="true" />
-        Sign out
+        {signingOut ? <Spinner /> : <LogOut size={16} aria-hidden="true" />}
+        {signingOut ? 'Signing out…' : 'Sign out'}
       </button>
     </div>
   )
